@@ -142,7 +142,7 @@
     <ClCompile Include="MultithreadingBufferExcersise.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Buffer.h" />
+    <ClInclude Include="Buffer.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
