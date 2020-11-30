@@ -14,11 +14,10 @@
 static std::random_device rd;
 static std::mt19937 gen(rd());
 
-std::mutex mu;
-std::condition_variable condition;
-std::deque<float> buffer;
-
+// This flag might not be the best way to control these threads
 bool shouldRun = true;
+
+// Configuration
 const unsigned int BUFFER_SIZE = 20;
 const unsigned int BATCH_SIZE = 8;
 
@@ -55,7 +54,7 @@ void producer(std::shared_ptr<Buffer<double>> buffer, bool verbal = false) {
 
 void consumer(std::shared_ptr<Buffer<double>> buffer, unsigned int sleepTime = 2, bool displayBatch = false) {
     while (shouldRun) {
-        std::vector<double>* batch = buffer->flush();
+        std::vector<double>* batch = buffer->fetch();
 
         // Not sure if consure is responsible for showing the buffer size as it
         // technically only see last batch that was available to it
@@ -65,7 +64,7 @@ void consumer(std::shared_ptr<Buffer<double>> buffer, unsigned int sleepTime = 2
             // It's such a pain that you can't convert in one line thread id
             // into a c_str, I didn't wanted to use C++20 std::format as it's too fresh
             std::cout << "Consumer | thread id: " << std::this_thread::get_id()
-                << "  size of the patch: " << batch->size() << std::endl;
+                << "  size of the batch: " << batch->size() << std::endl;
             printVector<double>(batch);
         }
 
@@ -83,7 +82,6 @@ int main()
     std::shared_ptr<Buffer<double>> buffer(new Buffer<double>(BUFFER_SIZE, BATCH_SIZE));
 
     std::cout << "Press any key to stop threads...\n";
-
 
     // Not sure how to use optional parameters with threads
     std::thread t1(producer, std::ref(buffer), false);

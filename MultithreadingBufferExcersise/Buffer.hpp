@@ -10,6 +10,8 @@ class Buffer
 private:
 	std::deque<T> container;
 	std::mutex mu;
+	std::condition_variable condition;
+
 	unsigned int maxSize;
 	unsigned int batchSize;
 
@@ -40,7 +42,7 @@ public:
 		// Unlock is called once lock falls out of scope
 	}
 
-	std::vector<T>* flush() {
+	std::vector<T>* fetch() {
 		std::vector<T>* batch = new std::vector<T>;
 
 		// If the buffer is empty returns empty
@@ -57,7 +59,9 @@ public:
 			batch->push_back(*it);
 		}
 
-		container.erase(container.begin(), container.begin() + currentBatchSize);
+		// I'm not sure why but I initially assumed that consuming buffer will clear
+		// entier batch from the buffer
+		//container.erase(container.begin(), container.begin() + currentBatchSize);
 
 		return batch;
 	}
