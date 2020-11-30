@@ -2,11 +2,8 @@
 //
 
 #include <iostream>
-#include <sstream>
 #include <conio.h>
-#include <deque>
 #include <vector>
-#include <mutex>
 #include <random>
 
 #include "Buffer.hpp"
@@ -15,7 +12,7 @@ static std::random_device rd;
 static std::mt19937 gen(rd());
 
 // This flag might not be the best way to control these threads
-bool shouldRun = true;
+std::atomic<bool> shouldRun = true;
 
 // Configuration
 const unsigned int BUFFER_SIZE = 20;
