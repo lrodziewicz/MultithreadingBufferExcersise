@@ -35,6 +35,12 @@ public:
 	void pushValue(T value) {
 		// I guess since C++17 we should use std::scoped_lock instead
 		std::lock_guard<std::mutex> lock(mu);
+
+		// I'm not sure if I understood requirements correctly but in
+		// some cases we can use condition_variable to put other threads into sleep
+		// in case of one producer I don't think it's nessesary
+		//condiation.wait(lock, [this]() { return container.size() < batchSize; })
+
 		if (container.size() == maxSize) {
 			container.pop_back();
 		}
@@ -48,6 +54,9 @@ public:
 		// If the buffer is empty returns empty
 		if (container.empty()) return batch;
 
+		// As there is multiple consumers we probably could use
+		// condition_variable here but I'm not sure if it makes sense
+		// if buffer is not flushed when consumed (that was my understanding)
 		std::lock_guard<std::mutex> lock(mu);
 		std::cout << "Current total buffer size: "
 			<< container.size()
