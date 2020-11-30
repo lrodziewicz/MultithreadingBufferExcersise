@@ -90,7 +90,7 @@ int main()
     // with parameters it would require some sort of configuration handling
     std::thread t3(consumer, buffer, 1, true);
 
-    _getch();
+    char c =_getch();
     shouldRun = false;
 
     t1.join();
