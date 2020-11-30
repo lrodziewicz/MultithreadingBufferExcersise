@@ -97,8 +97,5 @@ int main()
     t2.join();
     t3.join();
 
-    std::printf("Size of the buffer: %u\n", buffer->getCurrentSize());
-
-
     return 0;
 }
