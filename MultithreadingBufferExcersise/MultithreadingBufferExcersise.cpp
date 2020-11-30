@@ -84,7 +84,7 @@ int main()
     std::cout << "Press any key to stop threads...\n";
 
     // Not sure how to use optional parameters with threads
-    std::thread t1(producer, std::ref(buffer), false);
+    std::thread t1(producer, buffer, false);
     std::thread t2(consumer, buffer, 5, true);
     // If these would have the same parameters we could simply implement thread pool
     // with parameters it would require some sort of configuration handling
