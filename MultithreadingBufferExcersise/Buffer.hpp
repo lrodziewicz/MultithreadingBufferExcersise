@@ -47,6 +47,10 @@ public:
 		if (container.empty()) return batch;
 
 		std::lock_guard<std::mutex> lock(mu);
+		std::cout << "Current total buffer size: "
+			<< container.size()
+			<< std::endl;
+
 		unsigned int currentBatchSize = getCurrentBatchSize();
 		typename std::deque<T>::iterator it;
 		for (it = container.begin(); it != (container.begin() + currentBatchSize); it++) {

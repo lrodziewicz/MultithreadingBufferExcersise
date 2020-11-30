@@ -2,6 +2,7 @@
 //
 
 #include <iostream>
+#include <sstream>
 #include <conio.h>
 #include <deque>
 #include <vector>
@@ -16,32 +17,34 @@ static std::mt19937 gen(rd());
 std::mutex mu;
 std::condition_variable condition;
 std::deque<float> buffer;
+
 bool shouldRun = true;
 const unsigned int BUFFER_SIZE = 20;
-const unsigned int BATCH_SIZE = 10;
+const unsigned int BATCH_SIZE = 8;
 
-//template <typename T>
-void printVector(std::vector<double>* values) {
-    // Figuring it out took so loong... 
+template <typename T>
+void printVector(std::vector<T>* values) {
     std::cout << "Current buffer batch:\n";
+    // Figuring out how to make it work with pointer took me way too long... 
     for (auto&& value : *values) {
         std::cout << value << ",\t";
     }
     std::cout << "\n";
-}
+};
 
 double getRandomNumber() {
     std::uniform_real_distribution<> dis(0, 100);
     return std::sin(dis(gen));
 }
 
-void producer(std::shared_ptr<Buffer<double>> buffer) {
+void producer(std::shared_ptr<Buffer<double>> buffer, bool verbal = false) {
     while (shouldRun) {
 
-        std::printf("Producer: Size of the buffer %u\n", buffer->getCurrentSize());
         // I wasn't sure if sin(x) form the description meant some sort of rnumb
         // or sin(times_of_execution). Random number avoids overflowing loop counter
         double rvalue = getRandomNumber();
+
+        if(verbal)
         std::printf("Producer: Random signal %f\n", rvalue);
 
         buffer->pushValue(rvalue);
@@ -50,16 +53,25 @@ void producer(std::shared_ptr<Buffer<double>> buffer) {
     }
 }
 
-void consumer(std::shared_ptr<Buffer<double>> buffer) {
+void consumer(std::shared_ptr<Buffer<double>> buffer, unsigned int sleepTime = 2, bool displayBatch = false) {
     while (shouldRun) {
-        std::printf("Consumer: Size of the whole buffer: %u\n", buffer->getCurrentSize());
-
         std::vector<double>* batch = buffer->flush();
-        std::printf("Consumer: Size of the batch: %u\n", batch->size());
-        printVector(batch);
+
+        // Not sure if consure is responsible for showing the buffer size as it
+        // technically only see last batch that was available to it
+        // I have made assumption that there it's not required to create seperate
+        // thread just for displaying entier buffer not
+        if (displayBatch) {
+            // It's such a pain that you can't convert in one line thread id
+            // into a c_str, I didn't wanted to use C++20 std::format as it's too fresh
+            std::cout << "Consumer | thread id: " << std::this_thread::get_id()
+                << "  size of the patch: " << batch->size() << std::endl;
+            printVector<double>(batch);
+        }
+
         delete batch;
 
-        std::this_thread::sleep_for(std::chrono::seconds(5));
+        std::this_thread::sleep_for(std::chrono::seconds(sleepTime));
     }
 }
 
@@ -73,14 +85,19 @@ int main()
     std::cout << "Press any key to stop threads...\n";
 
 
-    std::thread t1(producer, buffer);
-    std::thread t2(consumer, buffer);
+    // Not sure how to use optional parameters with threads
+    std::thread t1(producer, std::ref(buffer), false);
+    std::thread t2(consumer, buffer, 5, true);
+    // If these would have the same parameters we could simply implement thread pool
+    // with parameters it would require some sort of configuration handling
+    std::thread t3(consumer, buffer, 1, true);
 
     _getch();
     shouldRun = false;
 
     t1.join();
     t2.join();
+    t3.join();
 
     std::printf("Size of the buffer: %u\n", buffer->getCurrentSize());
 
